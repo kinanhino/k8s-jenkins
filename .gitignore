@@ -1,0 +1,3 @@
+services/polybot_eks_jenkins/server.crt
+k8s/elb_keys/
+k8s/polybot/server.crt
