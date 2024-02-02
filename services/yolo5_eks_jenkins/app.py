@@ -21,6 +21,7 @@ with open("data/coco128.yaml", "r") as stream:
     names = yaml.safe_load(stream)['names']
 
 def consume():
+    logger.info("Up and Running..")
     while True:
         response = sqs_client.receive_message(QueueUrl=queue_name, MaxNumberOfMessages=1, WaitTimeSeconds=5)
 
@@ -73,7 +74,7 @@ def consume():
                         'height': Decimal(str(l[4])),
                     } for l in labels]
 
-                logger.info(f'prediction: {prediction_id}/{original_img_path}. prediction summary:\n\n{labels_done}')
+                # logger.info(f'prediction: {prediction_id}/{original_img_path}. prediction summary:\n\n{labels_done}')
 
                 prediction_summary = {
                     'prediction_id': prediction_id,
@@ -95,7 +96,7 @@ def consume():
 
 def send_request_to_polybot(prediction_id):
     try:
-        poly_service_url = 'http://team3polybot-service:8443'
+        poly_service_url = os.getenv('POLYBOT_URL')
         res = requests.get(f'{poly_service_url}/results?predictionId={prediction_id}')
         logger.info(f'Status Code: {res.status_code}')
         res.raise_for_status()
@@ -130,7 +131,7 @@ def download_image_from_s3(bucket, s3_img_path, local_img_path=None):
 
 def store_dynamo(summary_dictionary):
     dynamodb = session.resource('dynamodb')
-    dynamo_tbl = dynamodb.Table('aws-dynamo-kinan')
+    dynamo_tbl = dynamodb.Table(os.getenv('DYNAMO_TBL'))
     try:
         res = dynamo_tbl.put_item(Item=summary_dictionary)
         logger.info(f'Saved successfully to DynamoDB')
